@@ -1,0 +1,67 @@
+---
+title: "Tidy Tuesday - Doctor Who"
+subtitle: "STA 199 - Fall 2023"
+author: "Pierre Quereuil"
+format: pdf
+editor: visual
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Packages
+
+```{r}
+#| label: load-packages
+#| message: false
+
+library(tidyverse)
+library(tidymodels)
+library(ggthemes)
+```
+
+```{r}
+#| label: load-data
+
+library(datardis)
+episodes <- drwho_episodes |>
+  mutate(uk_viewers = as.numeric(uk_viewers),
+         rating = as.numeric(rating),
+         type = if_else(type == "episode", "Regular", "Special"))
+```
+
+```{r}
+#| label: plot-data
+#| warning: false
+#| message: false
+
+coeff <- 8
+viewerColor <- "#69b3a2"
+ratingColor <- rgb(0.2, 0.6, 0.9, 1)
+
+episodes |>
+  ggplot() +
+  geom_point(aes(x = first_aired, y = uk_viewers, color = type, shape = type)) +
+  scale_color_manual(values=c(viewerColor, "#99b3C2")) +
+  geom_smooth(aes(x = first_aired, y = uk_viewers), 
+              se = F, method = "lm", color = viewerColor, linewidth = 0.5) +
+  geom_line(aes(x = first_aired, y = rating / coeff), 
+            color = ratingColor, linewidth = 1) +
+  scale_y_continuous(
+    name = "UK Viewers",
+    label = function(x) paste(x, "M"),
+    sec.axis = sec_axis(~.*coeff, name="Rating")
+  ) +
+  theme_bw() +
+  theme(
+    axis.title.y = element_text(color = viewerColor, size=13),
+    axis.title.y.right = element_text(color = ratingColor, size=13),
+    axis.text.y = element_text(color = viewerColor),
+    axis.text.y.right = element_text(color = ratingColor),
+    legend.position = "bottom"
+  ) +
+  labs(x = "First Aired", 
+       color = "Episode Type", 
+       shape = "Episode Type",
+       title = "Doctor Who Episodes",
+       subtitle = "Evolution of Viewer Count and Rating")
+```
